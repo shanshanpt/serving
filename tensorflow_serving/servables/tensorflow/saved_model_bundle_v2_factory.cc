@@ -1,11 +1,8 @@
 /* Copyright 2016 Google Inc. All Rights Reserved.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,7 +10,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "tensorflow_serving/servables/tensorflow/saved_model_bundle_factory.h"
+#include "tensorflow_serving/servables/tensorflow/saved_model_bundle_v2_factory.h"
 
 #include "absl/strings/string_view.h"
 #include "tensorflow/cc/saved_model/tag_constants.h"
@@ -35,7 +32,7 @@ namespace serving {
 namespace {
 
 // Extracts the signatures from 'bundle'.
-std::vector<SignatureDef> GetSignatureDefs(const SavedModelBundle& bundle) {
+std::vector<SignatureDef> GetSignatureDefs(const SavedModelBundleV2& bundle) {
   std::vector<SignatureDef> signature_defs;
   for (const auto& entry : bundle.meta_graph_def.signature_def()) {
     const SignatureDef& signature_def = entry.second;
@@ -63,63 +60,45 @@ Status ParseFixedInputTensors(
 // TODO(b/140959776): Move this upstream alongside `kSavedModelFilenamePb`.
 const char kTfLiteModelFilename[] = "model.tflite";
 
-Status LoadTfLiteModel(const string& model_dir, SavedModelBundle* bundle) {
-  std::unique_ptr<TfLiteSession> session;
-
-  const string& fname = io::JoinPath(model_dir, kTfLiteModelFilename);
-  uint64 size;
-  TF_RETURN_IF_ERROR(Env::Default()->GetFileSize(fname, &size));
-
-  std::unique_ptr<RandomAccessFile> file;
-  TF_RETURN_IF_ERROR(Env::Default()->NewRandomAccessFile(fname, &file));
-
-  string model_bytes;
-  model_bytes.resize(size);
-  absl::string_view sv;
-  TF_RETURN_IF_ERROR(file->Read(0, size, &sv, &model_bytes[0]));
-
-  std::unique_ptr<TfLiteSession> tflite_session;
-  TF_RETURN_IF_ERROR(
-      TfLiteSession::Create(std::move(model_bytes), &tflite_session,
-                            bundle->meta_graph_def.mutable_signature_def()));
-  bundle->session = std::move(tflite_session);
+Status LoadTfLiteModel(const string& model_dir, SavedModelBundleV2* bundle) {
+  LOG(FATAL) << "Not support tflite.";
   return Status::OK();
 }
 
 }  // namespace
 
-Status SavedModelBundleFactory::Create(
-    const SessionBundleConfig& config,
-    std::unique_ptr<SavedModelBundleFactory>* factory) {
+Status SavedModelBundleV2Factory::Create(
+    const SessionGroupBundleConfig& config,
+    std::unique_ptr<SavedModelBundleV2Factory>* factory) {
   std::shared_ptr<Batcher> batcher;
   if (config.has_batching_parameters()) {
     TF_RETURN_IF_ERROR(
         CreateBatchScheduler(config.batching_parameters(), &batcher));
   }
-  factory->reset(new SavedModelBundleFactory(config, batcher));
+  factory->reset(new SavedModelBundleV2Factory(config, batcher));
   return Status::OK();
 }
 
-Status SavedModelBundleFactory::EstimateResourceRequirement(
+Status SavedModelBundleV2Factory::EstimateResourceRequirement(
     const string& path, ResourceAllocation* estimate) const {
   return EstimateResourceFromPath(path, estimate);
 }
 
-Status SavedModelBundleFactory::CreateSavedModelBundleWithMetadata(
+Status SavedModelBundleV2Factory::CreateSavedModelBundleV2WithMetadata(
     const Loader::Metadata& metadata, const string& path,
-    std::unique_ptr<SavedModelBundle>* bundle) {
-  return InternalCreateSavedModelBundle(metadata, path, bundle);
+    std::unique_ptr<SavedModelBundleV2>* bundle) {
+  return InternalCreateSavedModelBundleV2(metadata, path, bundle);
 }
 
-Status SavedModelBundleFactory::CreateSavedModelBundle(
-    const string& path, std::unique_ptr<SavedModelBundle>* bundle) {
-  return InternalCreateSavedModelBundle({}, path, bundle);
+Status SavedModelBundleV2Factory::CreateSavedModelBundleV2(
+    const string& path, std::unique_ptr<SavedModelBundleV2>* bundle) {
+  return InternalCreateSavedModelBundleV2({}, path, bundle);
 }
 
-Status SavedModelBundleFactory::InternalCreateSavedModelBundle(
+Status SavedModelBundleV2Factory::InternalCreateSavedModelBundleV2(
     const absl::optional<Loader::Metadata>& metadata, const string& path,
-    std::unique_ptr<SavedModelBundle>* bundle) {
-  bundle->reset(new SavedModelBundle);
+    std::unique_ptr<SavedModelBundleV2>* bundle) {
+  bundle->reset(new SavedModelBundleV2);
   std::unordered_set<string> saved_model_tags(
       config_.saved_model_tags().begin(), config_.saved_model_tags().end());
   // Defaults to loading the meta graph def corresponding to the `serve` tag if
@@ -139,20 +118,15 @@ Status SavedModelBundleFactory::InternalCreateSavedModelBundle(
   }();
 
   if (config_.use_tflite_model()) {
-    TF_RETURN_IF_ERROR(LoadTfLiteModel(path, bundle->get()));
+    // TODO: FIXME TF_RETURN_IF_ERROR(LoadTfLiteModel(path, bundle->get()));
+    LOG(FATAL) << "No support tflite.";
   } else {
-LOG(INFO) << "=====================> LoadSessionBundleOrSavedModelBundle";
     TF_RETURN_IF_ERROR(LoadSessionBundleOrSavedModelBundle(
         session_options, GetRunOptions(config_), path, saved_model_tags,
         bundle->get()));
   }
   if (!config_.experimental_fixed_input_tensors().empty()) {
-    LOG(INFO) << "Wrapping session to inject fixed input tensors";
-    std::vector<std::pair<string, Tensor>> fixed_input_tensors;
-    TF_RETURN_IF_ERROR(ParseFixedInputTensors(
-        config_.experimental_fixed_input_tensors(), &fixed_input_tensors));
-    (*bundle)->session.reset(
-        new CurriedSession(std::move((*bundle)->session), fixed_input_tensors));
+    LOG(FATAL) << "Not support fixed input tensors.";
   }
   if (config_.remove_unused_fields_from_bundle_metagraph()) {
     // Save memory by removing fields in MetaGraphDef proto message stored
@@ -175,16 +149,17 @@ LOG(INFO) << "=====================> LoadSessionBundleOrSavedModelBundle";
     // Note that in the future, the plan is to enable explicit configuration of
     // the one or many SignatureDefs to enable.
     const std::vector<SignatureDef> signatures = GetSignatureDefs(**bundle);
-    return WrapSessionForBatching(config_.batching_parameters(),
-                                  batch_scheduler_, signatures,
-                                  &(*bundle)->session);
+    return WrapSessionGroupForBatching(config_.batching_parameters(),
+                                       batch_scheduler_, signatures,
+                                       &(*bundle)->session_group);
   }
-  return WrapSession(&(*bundle)->session);
+  return Status::OK();
 }
 
-SavedModelBundleFactory::SavedModelBundleFactory(
-    const SessionBundleConfig& config, std::shared_ptr<Batcher> batch_scheduler)
+SavedModelBundleV2Factory::SavedModelBundleV2Factory(
+    const SessionGroupBundleConfig& config, std::shared_ptr<Batcher> batch_scheduler)
     : config_(config), batch_scheduler_(batch_scheduler) {}
 
 }  // namespace serving
 }  // namespace tensorflow
+

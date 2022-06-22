@@ -23,10 +23,15 @@ def _tensorflow_http_archive(ctx):
         sha256 = ""
         git_commit = override_git_commit
 
-    strip_prefix = "DeepRec-%s" % git_commit
+    #strip_prefix = "DeepRec-%s" % git_commit
+    #urls = [
+    #    "https://mirror.bazel.build/github.com/alibaba/deeprec/archive/%s.tar.gz" % git_commit,
+    #    "https://github.com/alibaba/deeprec/archive/%s.tar.gz" % git_commit,
+    #]
+    strip_prefix = "DeepRec-1-%s" % git_commit 
     urls = [
-        "https://mirror.bazel.build/github.com/alibaba/deeprec/archive/%s.tar.gz" % git_commit,
-        "https://github.com/alibaba/deeprec/archive/%s.tar.gz" % git_commit,
+        "https://mirror.bazel.build/github.com/shanshanpt/deeprec-1/archive/%s.tar.gz" % git_commit,
+        "https://github.com/shanshanpt/deeprec-1/archive/%s.tar.gz" % git_commit,
     ]
     ctx.download_and_extract(
         urls,

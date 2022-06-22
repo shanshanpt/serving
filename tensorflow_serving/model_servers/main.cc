@@ -150,6 +150,16 @@ int main(int argc, char** argv) {
                        "simultaneously. Auto-configured by default."
                        "Note that this option is ignored if "
                        "--platform_config_file is non-empty."),
+      tensorflow::Flag("multi_streams_num",
+                       &options.multi_streams_num,
+                       "multi_streams_num"),
+      tensorflow::Flag("use_per_session_threads",
+                       &options.use_per_session_threads,
+                      "Use thread pool per session or not."),
+      tensorflow::Flag("session_num_per_group",
+                       &options.session_num_per_group,
+                       "Session num for a session group, "
+                       "default 0 means we not use session group."),
       tensorflow::Flag(
           "ssl_config_file", &options.ssl_config_file,
           "If non-empty, read an ascii SSLConfig protobuf from "
@@ -192,7 +202,9 @@ int main(int argc, char** argv) {
                        "EXPERIMENTAL; CAN BE REMOVED ANYTIME! Load and use "
                        "TensorFlow Lite model from `model.tflite` file in "
                        "SavedModel directory instead of the TensorFlow model "
-                       "from `saved_model.pb` file.")};
+                       "from `saved_model.pb` file."),
+      tensorflow::Flag("allow_gpu_mem_growth", &options.allow_gpu_mem_growth,
+                       "")};
 
   const auto& usage = tensorflow::Flags::Usage(argv[0], flag_list);
   if (!tensorflow::Flags::Parse(&argc, argv, flag_list)) {

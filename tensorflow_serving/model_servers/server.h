@@ -70,6 +70,7 @@ class Server {
     // Zero means that the thread pools will be auto configured.
     tensorflow::int64 tensorflow_intra_op_parallelism = 0;
     tensorflow::int64 tensorflow_inter_op_parallelism = 0;
+    tensorflow::int32 multi_streams_num = 0;
     tensorflow::string platform_config_file;
     tensorflow::string ssl_config_file;
     string model_config_file;
@@ -83,6 +84,10 @@ class Server {
     bool enforce_session_run_timeout = true;
     bool remove_unused_fields_from_bundle_metagraph = true;
     bool use_tflite_model = false;
+    bool allow_gpu_mem_growth = false;
+    // For session group
+    bool use_per_session_threads = false;
+    tensorflow::int32 session_num_per_group = 0;
 
     Options();
   };
