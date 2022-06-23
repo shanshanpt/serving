@@ -307,7 +307,7 @@ Status HttpRestApiHandler::ProcessModelMetadataRequest(
 Status HttpRestApiHandler::GetInfoMap(
     const ModelSpec& model_spec, const string& signature_name,
     ::google::protobuf::Map<string, tensorflow::TensorInfo>* infomap) {
-  ServableHandle<SavedModelBundle> bundle;
+  ServableHandle<SavedModelBundleV2> bundle;
   TF_RETURN_IF_ERROR(core_->GetServableHandle(model_spec, &bundle));
   const string& signame =
       signature_name.empty() ? kDefaultServingSignatureDefKey : signature_name;

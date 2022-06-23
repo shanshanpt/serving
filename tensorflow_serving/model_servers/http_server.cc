@@ -211,7 +211,12 @@ std::unique_ptr<net_http::HTTPServerInterface> CreateAndStartHttpServer(
   net_http::RequestHandlerOptions handler_options;
   server->RegisterRequestDispatcher(
       [dispatcher](net_http::ServerRequestInterface* req) {
-        return dispatcher->Dispatch(req);
+//static int64_t iii = 0;
+//int64_t xxx = iii++;
+//LOG(INFO) << "==================> start Dispatch: " << xxx;
+        auto ret = dispatcher->Dispatch(req);
+//LOG(INFO) << "==================> end Dispatch: " << xxx ;
+        return ret;
       },
       handler_options);
   if (server->StartAcceptingRequests()) {

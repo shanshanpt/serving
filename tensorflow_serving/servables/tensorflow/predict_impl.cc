@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <string>
 #include <utility>
+#include <pthread.h>
 
 #include "absl/strings/substitute.h"
 #include "tensorflow/cc/saved_model/loader.h"
@@ -148,7 +149,9 @@ Status TensorflowPredictor::Predict(const RunOptions& run_options,
     return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                               "Missing ModelSpec");
   }
-//LOG(INFO) << "==============================> TensorflowPredictor::Predict: use_session_group_: " << use_session_group_;
+use_session_group_ = true;
+//LOG(INFO) << "==============================> TensorflowPredictor::Predict: use_session_group_: "
+//<< use_session_group_ << ", use_saved_model_: " << use_saved_model_;
   if (use_session_group_) {
     return PredictWithModelSpecV2(run_options, core, request.model_spec(), request,
                                   response); 
@@ -166,10 +169,15 @@ Status TensorflowPredictor::PredictWithModelSpecV2(const RunOptions& run_options
   if (use_saved_model_) {
     ServableHandle<SavedModelBundleV2> bundle;
     TF_RETURN_IF_ERROR(core->GetServableHandle(model_spec, &bundle));
-    return internal::RunPredict(
+//static int64 iii = 0;
+//int64 xxx = iii++;
+//LOG(INFO) << "========================> PredictWithModelSpecV2: xxx = " << xxx << ", thread: " << pthread_self();
+    auto sss = internal::RunPredict(
         run_options, bundle->meta_graph_def, bundle.id().version,
         core->predict_response_tensor_serialization_option(),
         bundle->session_group->GetSession(), request, response);
+//LOG(INFO) << "==================> xxx: " << xxx; // << ", resp: " << response->DebugString();
+return sss;
   }
   ServableHandle<SessionGroupBundle> bundle;
   TF_RETURN_IF_ERROR(core->GetServableHandle(model_spec, &bundle));
