@@ -273,7 +273,12 @@ Status CreatePlatformConfigMapV2(const Server::Options& server_options,
             server_options.allow_gpu_mem_growth);                                                        
 LOG(INFO) << "==============================> server_options.allow_gpu_mem_growth: "                     
 << server_options.allow_gpu_mem_growth;                                                                  
-                                                                                                         
+
+     session_bundle_config.mutable_session_config()                                                       
+        ->set_use_multi_stream(                                                                              
+            server_options.use_multi_stream);                                                        
+LOG(INFO) << "==============================> server_options.use_multi_stream: "                     
+<< server_options.use_multi_stream;                                                                                                                   
 //    session_bundle_config.mutable_session_config()                                                       
 //    ->set_multi_streams_num(server_options.multi_streams_num);                                                                                                               
 //    LOG(INFO) << "====================> server_options.multi_streams_num: "                              

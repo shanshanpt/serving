@@ -204,6 +204,8 @@ int main(int argc, char** argv) {
                        "SavedModel directory instead of the TensorFlow model "
                        "from `saved_model.pb` file."),
       tensorflow::Flag("allow_gpu_mem_growth", &options.allow_gpu_mem_growth,
+                       ""),
+      tensorflow::Flag("use_multi_stream", &options.use_multi_stream,
                        "")};
 
   const auto& usage = tensorflow::Flags::Usage(argv[0], flag_list);

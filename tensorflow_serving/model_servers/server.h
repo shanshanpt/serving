@@ -85,6 +85,7 @@ class Server {
     bool remove_unused_fields_from_bundle_metagraph = true;
     bool use_tflite_model = false;
     bool allow_gpu_mem_growth = false;
+    bool use_multi_stream = false;
     // For session group
     bool use_per_session_threads = false;
     tensorflow::int32 session_num_per_group = 0;
